@@ -33,12 +33,14 @@ class ImageConverter {
       final originalImage = img.decodeImage(bytes);
 
       if (originalImage == null) {
-        throw Exception('فشل في قراءة الصورة');
+        print("Error: Could not decode image from bytes.");
+        throw Exception("فشل في قراءة الصورة أو أنها غير صالحة.");
       }
 
       final convertedBytes = _encodeImage(originalImage, targetFormat, quality);
       if (convertedBytes == null) {
-        throw Exception('فشل في تحويل الصورة');
+        print("Error: Failed to encode image to target format.");
+        throw Exception("فشل في تحويل الصورة إلى الصيغة المطلوبة.");
       }
 
       final savedPath = await _saveImage(convertedBytes, targetFormat);
@@ -110,12 +112,12 @@ class ImageConverter {
     }
     final timestamp = DateTime.now().millisecondsSinceEpoch;
     String extension = formatExtensions[format]!;
-    // Use PNG extension for WebP since we're converting to PNG as fallback
+    // Use PNG extension for WebP since we\"re converting to PNG as fallback
     if (format == ImageFormat.webp) {
-      extension = 'png';
+      extension = "png";
     }
-    final fileName = 'converted_image_$timestamp.$extension';
-    final filePath = '${outputDir.path}/$fileName';
+    final fileName = "converted_image_$timestamp.$extension";
+    final filePath = "${outputDir.path}/$fileName";
     
     final file = File(filePath);
     await file.writeAsBytes(imageBytes);

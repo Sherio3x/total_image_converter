@@ -45,6 +45,7 @@ class _ImageConverterHomeState extends State<ImageConverterHome> {
   int _remainingBatchUsage = 3;
   int _conversionProgress = 0;
   int _totalConversions = 0;
+  String? _successMessage; // For showing success message
 
   final ImagePicker _picker = ImagePicker();
 
@@ -56,16 +57,20 @@ class _ImageConverterHomeState extends State<ImageConverterHome> {
   }
 
   Future<void> _requestPermissions() async {
-    // Request storage permissions
     var status = await Permission.storage.status;
     if (!status.isGranted) {
       status = await Permission.storage.request();
     }
 
     if (status.isGranted) {
-      _showSnackBar('تم منح أذونات التخزين');
-    } else {
-      _showSnackBar('لم يتم منح أذونات التخزين. قد لا يعمل التطبيق بشكل صحيح.');
+      // No need to show snackbar if granted, as it's expected behavior
+    } else if (status.isDenied) {
+      _showSnackBar(
+          'تم رفض أذونات التخزين. يرجى منحها من إعدادات التطبيق ليعمل بشكل صحيح.');
+    } else if (status.isPermanentlyDenied) {
+      _showSnackBar(
+          'تم رفض أذونات التخزين بشكل دائم. يرجى منحها يدوياً من إعدادات التطبيق.');
+      openAppSettings(); // Open app settings for the user
     }
   }
 
@@ -83,6 +88,7 @@ class _ImageConverterHomeState extends State<ImageConverterHome> {
         setState(() {
           _selectedImages = [File(image.path)];
           _isBatchMode = false;
+          _successMessage = null; // Clear success message on new selection
         });
       }
     } catch (e) {
@@ -99,6 +105,7 @@ class _ImageConverterHomeState extends State<ImageConverterHome> {
         setState(() {
           _selectedImages = limitedImages;
           _isBatchMode = true;
+          _successMessage = null; // Clear success message on new selection
         });
       }
     } catch (e) {
@@ -170,9 +177,9 @@ class _ImageConverterHomeState extends State<ImageConverterHome> {
 
       if (convertedPaths.isNotEmpty) {
         final formatName = ImageConverter.formatNames[_selectedFormat]!;
-        _showSnackBar(
-          'تم تحويل ${convertedPaths.length} صورة إلى $formatName بنجاح!'
-        );
+        setState(() {
+          _successMessage = 'تم تحويل ${convertedPaths.length} صورة إلى $formatName بنجاح!';
+        });
         
         // Show interstitial ad after successful conversion (for single images)
         if (_selectedImages.length == 1) {
@@ -447,6 +454,39 @@ class _ImageConverterHomeState extends State<ImageConverterHome> {
             ),
 
             const SizedBox(height: 24),
+
+            // Success message
+            if (_successMessage != null) ...[
+              Container(
+                padding: const EdgeInsets.all(16),
+                margin: const EdgeInsets.only(bottom: 24),
+                decoration: BoxDecoration(
+                  color: Colors.green[50],
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.green[300]!),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.check_circle,
+                      color: Colors.green[700],
+                      size: 24,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        _successMessage!,
+                        style: TextStyle(
+                          color: Colors.green[800],
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
 
             // Progress indicator
             if (_isConverting && _totalConversions > 1) ...[
