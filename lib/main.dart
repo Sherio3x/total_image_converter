@@ -4,6 +4,7 @@ import 'dart:io';
 import 'services/ad_manager.dart';
 import 'services/usage_manager.dart';
 import 'services/image_converter.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -51,6 +52,21 @@ class _ImageConverterHomeState extends State<ImageConverterHome> {
   void initState() {
     super.initState();
     _updateRemainingUsage();
+    _requestPermissions(); // Request permissions on app start
+  }
+
+  Future<void> _requestPermissions() async {
+    // Request storage permissions
+    var status = await Permission.storage.status;
+    if (!status.isGranted) {
+      status = await Permission.storage.request();
+    }
+
+    if (status.isGranted) {
+      _showSnackBar('تم منح أذونات التخزين');
+    } else {
+      _showSnackBar('لم يتم منح أذونات التخزين. قد لا يعمل التطبيق بشكل صحيح.');
+    }
   }
 
   Future<void> _updateRemainingUsage() async {

@@ -103,17 +103,19 @@ class ImageConverter {
 
   // Save image to device storage
   static Future<String> _saveImage(Uint8List imageBytes, ImageFormat format) async {
-    final directory = await getExternalStorageDirectory();
+    final directory = (await getExternalStorageDirectory())!; // Use external storage for user access
+    final outputDir = Directory("${directory.path}/TotalImageConverter");
+    if (!await outputDir.exists()) {
+      await outputDir.create(recursive: true);
+    }
     final timestamp = DateTime.now().millisecondsSinceEpoch;
-    
-    // Use PNG extension for WebP since we're converting to PNG as fallback
     String extension = formatExtensions[format]!;
+    // Use PNG extension for WebP since we're converting to PNG as fallback
     if (format == ImageFormat.webp) {
       extension = 'png';
     }
-    
     final fileName = 'converted_image_$timestamp.$extension';
-    final filePath = '${directory!.path}/$fileName';
+    final filePath = '${outputDir.path}/$fileName';
     
     final file = File(filePath);
     await file.writeAsBytes(imageBytes);
